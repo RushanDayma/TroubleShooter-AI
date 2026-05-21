@@ -1,85 +1,123 @@
-**NetSage AI** is an AI-powered network troubleshooting assistant designed specifically for Cisco Packet Tracer and networking lab environments. It empowers junior network engineers to efficiently identify root causes of network issues by intelligently analyzing user-described symptoms, topology notes, and Cisco CLI `show` command outputs.
+# TroubleShooter-AI 🛠️⚡
+
+> **An AI-Assisted Cisco Network Diagnostic Engine & Infrastructure Troubleshooter**
+
+TroubleShooter-AI is a full-stack automated network diagnostic tool that bridges network engineering and generative AI. It accepts raw diagnostic output from Cisco IOS devices (or Cisco Packet Tracer simulations), parses key protocol states, and leverages Large Language Models (LLMs) to identify root cause misconfigurations and generate exact CLI remediation commands.
 
 ---
 
-## 🏗️ Architecture Workflow
+## 🌟 Key Features
 
-NetSage AI bridges the gap between deterministic network validation and AI-driven insights through a robust human-in-the-loop workflow.
+- **Automated Configuration Parsing**: Parses diagnostic outputs (`show running-config`, `show ip route`, `show ip interface brief`, etc.) from Cisco routers and switches.
+- **LLM-Driven Root Cause Analysis**: Uses custom prompt templates (`diagnose_prompt.md`) and LLM orchestration to identify protocol failures (VLAN misconfigurations, DHCP scope issues, static/dynamic routing drops, and ACL rules).
+- **Synthetic Test-Case Generator**: Includes a dedicated script (`generate_cases.py`) and dataset (`cases.csv`) to benchmark diagnostic accuracy across custom topology scenarios.
+- **Interactive Web Dashboard**: Modern React + Vite frontend for real-time log ingestion, diagnostic breakdown, and side-by-side CLI command generation.
+- **Human-in-the-Loop Safeguard**: Generates suggested CLI remediation scripts that engineers can review and verify before applying to production/simulated devices.
 
-```mermaid
-flowchart TD
-    A[User / Engineer] -->|Inputs Case Details| B(NetSage AI Dashboard)
-    B -->|Symptoms & Outputs| C{Rule Checker}
-    C -->|Known Faults| D[Deterministic Diagnosis]
-    C -->|Complex Issues| E[AI Analysis Engine]
-    D --> F[Evidence & Root Cause]
-    E --> F
-    F --> G[Human Review]
-    G -->|Accept| H[Fix Generation]
-    G -->|Edit/Reject| I[Responsible AI Log]
-    I --> H
-    H --> J[Verification]
+---
+
+## 🏗️ System Architecture
+
+
 ```
 
-## ✨ Key Features
+┌───────────────────────────┐      ┌───────────────────────────┐
+│   Cisco Packet Tracer /   │      │   React + Vite Frontend   │
+│     IOS CLI Telemetry     │      │   (Interactive Web UI)    │
+└─────────────┬─────────────┘      └─────────────┬─────────────┘
+│                                  │
+│ Raw Log Output                   │ REST API
+▼                                  ▼
+┌──────────────────────────────────────────────────────────────┐
+│                   Python Backend Engine                      │
+│      (FastAPI/Flask API Parser & Diagnostic Agent)           │
+└─────────────────────────────┬────────────────────────────────┘
+│
+▼
+┌──────────────────────────────────────────────────────────────┐
+│              LLM Diagnostic Pipeline & Prompts               │
+│         (LangChain / Groq / OpenAI Integration)              │
+└──────────────────────────────────────────────────────────────┘
 
-- 🧠 **AI-Powered Diagnosis**: Analyzes raw command output and contextual symptoms to provide an evidence-backed root cause, a confidence score, and actionable remediation steps.
-- 🔍 **Deterministic Rule Checker**: A fast, deterministic Python engine (`checker.py`) that acts as a first line of defense, catching common faults (e.g., duplicate IP addresses, downed interfaces, missing VLANs) before invoking the AI.
-- 🧑‍💻 **Human-in-the-Loop Workflow**: Ensures safety and accuracy. All AI recommendations MUST be reviewed by a human expert. The system seamlessly supports accepting, editing, or rejecting AI diagnoses.
-- 📈 **Responsible AI Logging**: Tracks all human corrections made to AI diagnoses. This critical feedback loop is used to continuously improve and fine-tune the model over time.
-- 📚 **Extensive Case Library**: Ships pre-loaded with over 30 realistic, challenging networking troubleshooting scenarios to test and train on.
+```
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS
+- **Backend**: Python 3.10+, FastAPI/Flask
+- **AI & Automation**: LangChain, LLM Prompts (`diagnose_prompt.md`), Custom Synthesizers
+- **Networking Protocols**: Cisco IOS, TCP/IP, Subnetting, VLAN, OSPF/EIGRP, DHCP, NAT, ACLs
+- **Simulation**: Cisco Packet Tracer
+
+---
+
+## 📁 Repository Structure
+
+
+```
+
+TroubleShooter-AI/
+├── backend/
+│   ├── checker.py            # Log validation & CLI parser engine
+│   └── main.py               # API backend routes & model invocation
+├── frontend/
+│   ├── public/               # Static assets & icons
+│   ├── src/                  # React dashboard components & UI
+│   ├── package.json          # Frontend dependencies
+│   └── vite.config.ts        # Vite configuration
+├── cases.csv                 # Synthetic test case dataset
+├── diagnose_prompt.md        # Core LLM prompt engineering template
+├── generate_cases.py         # Test case generation engine
+└── README.md                 # Project documentation
+
+```
+
+---
 
 ## 🚀 Getting Started
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
-
 ### Prerequisites
 
-Ensure you have the following installed:
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [Python](https://www.python.org/) (3.9 or higher)
+- **Python**: `3.10` or higher
+- **Node.js**: `v18.0` or higher
+- **Cisco Packet Tracer** (Optional, for generating live network logs)
 
-### 💻 Frontend Setup (Dashboard)
-
-The frontend is built with React, Vite, and Tailwind CSS.
+### 1. Backend Setup
 
 ```bash
-# Navigate to the frontend directory
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start the development server
-npm run dev
-```
-The dashboard will typically be available at `http://localhost:5173`.
-
-### ⚙️ Backend Setup (API)
-
-The backend is a robust REST API built with FastAPI.
-
-```bash
-# Navigate to the backend directory
+# Navigate to backend directory or project root
 cd backend
 
-# (Optional but recommended) Create and activate a virtual environment
-python -m venv venv
-# On Windows: venv\Scripts\activate
-# On macOS/Linux: source venv/bin/activate
+# Install dependencies
+pip install -r requirements.txt
 
-# Install the required Python packages
-pip install fastapi uvicorn
+# Start the Python server
+python main.py
 
-# Start the FastAPI server with live reload
-uvicorn main:app --reload
 ```
-The API will be available at `http://localhost:8000`. You can view the interactive API documentation at `http://localhost:8000/docs`.
+
+### 2. Frontend Setup
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install packages
+npm install
+
+# Start development server
+npm run dev
+
+```
+
+Open `http://localhost:5173` in your browser to access the dashboard.
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contributors
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+* **Rushan Dayma** ([@RushanDayma](https://www.google.com/search?q=https://github.com/RushanDayma&utm_source=gemini))
+* **Aditya** ([@aditya-3027](https://www.google.com/search?q=https://github.com/aditya-3027&utm_source=gemini))
 
-Made with ❤️ by Shourya Kumar.
